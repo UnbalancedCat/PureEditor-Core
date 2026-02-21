@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PureEditor-Core-Meta Test Suite</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            font-family: sans-serif;
+            overflow: hidden;
+        }
+
+        #controls {
+            width: 320px;
+            min-width: 320px;
+            padding: 10px;
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        #editor {
+            flex: 1;
+            height: 100%;
+            /* Ensure editor takes remaining space but doesn't overflow */
+            min-width: 0;
+        }
+
+        #logs {
+            height: 200px;
+            background: #1e1e1e;
+            color: #afafaf;
+            font-family: monospace;
+            padding: 8px;
+            overflow-y: auto;
+            font-size: 11px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        .log-item {
+            margin-bottom: 2px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 2px;
+        }
+
+        button {
+            padding: 6px 12px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            background: #fff;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        button:hover {
+            background-color: #eee;
+        }
+
+        button:active {
+            background-color: #ddd;
+        }
+
+        .group {
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        h3 {
+            margin: 0 0 4px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Controls on the Left -->
+    <div id="controls">
+        <h3>Host Logs</h3>
+        <div id="logs"></div>
+        <button onclick="clearLogs()">Clear Logs</button>
+
+        <h3>Edit Commands</h3>
+        <div class="group">
+            <button onclick="window.undo()">Undo</button>
+            <button onclick="window.redo()">Redo</button>
+        </div>
+
+        <h3>Toolbar Actions</h3>
+        <div class="group">
+            <button onclick="window.insertText('Hello')">Insert 'Hello'</button>
+            <button onclick="window.insertText('{}')">Insert '{}'</button>
+            <button onclick="window.moveCursor('left')">←</button>
+            <button onclick="window.moveCursor('up')">↑</button>
+            <button onclick="window.moveCursor('down')">↓</button>
+            <button onclick="window.moveCursor('right')">→</button>
+        </div>
+
+        <h3>Layout</h3>
+        <div class="group">
+            <button onclick="window.setBodyPadding(50)">Set Padding 50px</button>
+            <button onclick="window.setBodyPadding(0)">Reset Padding</button>
+        </div>
+
+        <h3>Command Dispatch</h3>
+        <div class="group">
+            <button onclick="dispatch('file.save')">Simulate Ctrl+S</button>
+            <button onclick="dispatch('view.toggleSidebar')">Toggle Sidebar</button>
+        </div>
+
+        <h3>Configurations</h3>
+        <div class="group">
+            <button onclick="window.setShowLineNumbers(false)">Hide LineNums</button>
+            <button onclick="window.setShowLineNumbers(true)">Show LineNums</button>
+            <button onclick="window.setTheme(true)">Dark Theme</button>
+            <button onclick="window.setTheme(false)">Light Theme</button>
+        </div>
+    </div>
+
+    <!-- Editor on the Right -->
+    <div id="editor"></div>
+
+    <!-- Mock Host Interface -->
+    <script>
+        const logEl = document.getElementById('logs');
+
+        function log(msg) {
+            const div = document.createElement('div');
+            div.className = 'log-item';
+            div.textContent = `[Host] ${msg}`;
+            logEl.appendChild(div);
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(`[Host] ${msg}`);
+        }
+
+        function clearLogs() {
+            logEl.innerHTML = '';
+        }
+
+        function dispatch(cmd) {
+            log(`Dispatching legacy trigger for: ${cmd}`);
+            // In a real app, ArkTS would receive this event via interception
+            // Here we just log that we would have received it if we were the host listening
+        }
+
+        // Standardized Host Interface
+        window.editorHost = {
+            onEditorReady: () => log("Event: onEditorReady"),
+            onContentChange: (isDirty) => log(`Event: onContentChange (isDirty=${isDirty})`),
+            onHistoryStateChange: (undo, redo) => log(`Event: onHistoryStateChange (undo=${undo}, redo=${redo})`),
+            onSearchResultChange: (cur, tot) => log(`Event: search (current=${cur}, total=${tot})`),
+
+            dispatchCommand: (cmdId) => {
+                log(`Event: dispatchCommand("${cmdId}")`);
+                alert(`Host received command: ${cmdId}`);
+            }
+        };
+
+        // Legacy Interface (Optional: for verifying fallback)
+        window.editorProxy = {
+            // We can map these to the same log functions if we want to test legacy path
+            // But implementing editorHost is sufficient for new tests
+        };
+
+    </script>
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
