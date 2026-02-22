@@ -17,6 +17,7 @@ import { customLightTheme, customLightHighlightStyle, baseTheme } from "./themes
 import { syntaxHighlighting } from "@codemirror/language"
 import { history, undoDepth, redoDepth } from "@codemirror/commands"
 import { search } from "@codemirror/search"
+import { logSearchStats } from "./features/search"
 import { lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from "@codemirror/view"
 
 // 0. Initialize Host Interface
@@ -58,8 +59,17 @@ const myExtensions = [
     EditorView.updateListener.of((update) => {
         // 1. Content Change
         if (update.docChanged) {
-            const isDirty = true; // Simple check for now
-            host.onContentChange(isDirty);
+            // Check if the change was programmatic (e.g. from setValue)
+            let isProgrammatic = false;
+            for (let tr of update.transactions) {
+                if (tr.isUserEvent("programmatic")) {
+                    isProgrammatic = true;
+                    break;
+                }
+            }
+            if (!isProgrammatic) {
+                host.onContentChange(true);
+            }
         }
 
         // 2. History State Change
@@ -67,6 +77,7 @@ const myExtensions = [
             const canUndo = undoDepth(update.state) > 0;
             const canRedo = redoDepth(update.state) > 0;
             host.onHistoryStateChange(canUndo, canRedo);
+            logSearchStats(update.view); // Continually sync search results if doc or selection changed
         }
 
         // 3. View Update (Scroll/Cursor) - Throttled in Host if needed
@@ -77,7 +88,7 @@ const myExtensions = [
 // 2. Create State
 Logger.info("[main] Creating EditorState...");
 const state = EditorState.create({
-    doc: "// PureEditor-Core-Meta \n// Ready for Final Verification",
+    doc: "",
     extensions: myExtensions
 })
 

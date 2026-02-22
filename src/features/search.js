@@ -66,7 +66,7 @@ export function updateSearchState(view, keyword, replaceWord, isCaseSensitive, i
     logSearchStats(view);
 }
 
-function logSearchStats(view) {
+export function logSearchStats(view) {
     const query = getSearchQuery(view.state);
     if (!query || !query.search) return;
 
@@ -85,4 +85,13 @@ function logSearchStats(view) {
     }
 
     Logger.info(`[SearchStats] ${current}/${total}`);
+
+    // Dispatch to ArkTS Host
+    if (window.editorHost && window.editorHost.onSearchResultChange) {
+        try {
+            window.editorHost.onSearchResultChange(current, total);
+        } catch (e) {
+            Logger.error("[logSearchStats] Error dispatching to host:", e);
+        }
+    }
 }

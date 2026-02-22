@@ -1,6 +1,6 @@
 # PureEditor-Core-Meta
 
-`PureEditor-Core-Meta` 是 [PureEditor] 的下一代编辑器核心，基于 **CodeMirror 6** 构建。它专为嵌入 ArkTS/HarmonyOS WebView 而设计，通过桥接 API 与宿主应用进行无缝通信。
+`PureEditor-Core-Meta` 是 [PureEditor](https://pureeditor.unbalancedcat.cn/welcome.html) 的下一代编辑器核心，基于 **CodeMirror 6** 构建。它专为嵌入 ArkTS/HarmonyOS WebView 而设计，通过桥接 API 与宿主应用进行无缝通信。
 
 ## 功能特性
 
@@ -10,6 +10,8 @@
 - **代码缩略图 (Minimap)**：集成了代码缩略图，方便概览和快速跳转。
 - **状态持久化**：支持保存和恢复光标位置、选区以及滚动条位置。
 - **移动端优化**：针对虚拟键盘环境定制的光标可见性逻辑。
+- **多语言支持**：通过 Wasm 运行时支持 C++、Python 等环境的语法高亮与解析。
+- **智能编辑**：支持括号自动匹配 (Bracket Matching) 和智能 Tab 缩进/空格处理。
 
 ## 集成 API
 
@@ -33,7 +35,21 @@
 | `window.editorApi.setReadOnly(readOnly: boolean)` | 切换只读模式。 |
 | `window.editorApi.setWordWrap(enable: boolean)` | 切换自动换行。 |
 | `window.editorApi.setShowLineNumbers(enable: boolean)` | 切换行号显示。 |
+| `window.editorApi.setEditorConfig(enableLint, enableAutocomplete)` | 启用或禁用语法检查 (Lint) 和自动补全 (Autocomplete)。 |
 | `window.toggleMinimap(enable: boolean)` | 显示/隐藏代码缩略图。 |
+
+### 布局与编辑 (Layout & Editing)
+
+| 方法 | 描述 |
+| :--- | :--- |
+| `window.refreshLayout()` | 重新计算并刷新编辑器布局。 |
+| `window.setBodyPadding(bottom: number)` | 设置底部内边距，用于适配虚拟键盘和自定义工具栏。 |
+| `window.undo()` | 撤销上一步操作。 |
+| `window.redo()` | 重做上一步操作。 |
+| `window.insertText(text: string)` | 在当前光标处插入文本。 |
+| `window.insertBracket(left: string, right: string)` | 插入成对的括号 (例如: '(', ')'), 选中时会包裹选区。 |
+| `window.insertTab()` | 插入 Tab 或适当的空格，处理智能缩进。 |
+| `window.moveCursor(direction: string)` | 移动光标位置 ('up', 'down', 'left', 'right')。 |
 
 ### 搜索与导航 (Search & Navigation)
 
@@ -50,20 +66,34 @@
 
 | 方法 | 描述 |
 | :--- | :--- |
-| `window.getStats(): jsonString` | 返回 JSON 字符串 `{ lines, length, chars, words, selection }`。 |
-| `window.saveViewState(): jsonString` | 返回序列化的状态 JSON (包含滚动位置 + 选区)。 |
-| `window.restoreViewState(jsonString)` | 从保存的 JSON 字符串恢复编辑器状态。 |
+| `window.editorApi.getStats(): jsonString` | 返回 JSON 字符串 `{ lines, length, charsNoSpace, words }`。 |
+| `window.editorApi.saveViewState(): jsonString` | 返回序列化的状态 JSON (包含滚动位置 + 选区)。 |
+| `window.editorApi.restoreViewState(jsonString)` | 从保存的 JSON 字符串恢复编辑器状态。 |
 
-## 开发指南
+### 宿主回调 (Host Callbacks)
+
+部分操作会通过 `window.editorHost` (或兼容旧版的 `window.editorProxy`) 对象通知宿主环境 (ArkTS) 响应事件。
+
+| 回调方法 | 描述 |
+| :--- | :--- |
+| `window.editorHost.onEditorReady()` | 编辑器核心加载并初始化完成后触发。 |
+| `window.editorHost.onContentChange(isDirty: boolean)` | 编辑器内容发生改变时触发，返回脏状态。 |
+| `window.editorHost.onHistoryStateChange(canUndo: boolean, canRedo: boolean)` | 撤销/重做堆栈状态发生变更时触发。 |
+| `window.editorHost.onSearchResultChange(current: number, total: number)` | 搜索结果数量或当前高亮项改变时触发。 |
+| `window.editorHost.dispatchCommand(commandId: string)` | 请求宿主执行特定的通用命令 (如: 'file.new', 'view.openSettings' 等)。 |
+
+## 开发与构建 (Development & Build)
+
+该项目使用 Vite 打包工具构建，并集成了许可证抓取插件以满足开源合规要求。
 
 ```bash
 # 安装依赖
 npm install
 
-# 运行开发服务器
+# 运行开发服务器 (用于本地调试预览)
 npm run dev
 
-# 构建生产版本
+# 构建生产版本 (输出在 dist 目录下，包含 editor.bundle.js 和 THIRD_PARTY_NOTICES.txt)
 npm run build
 ```
 

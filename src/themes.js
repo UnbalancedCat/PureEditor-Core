@@ -10,7 +10,10 @@ export const baseTheme = EditorView.theme({
     },
     // Scrollbar Structure
     ".cm-scroller": { overflow: "auto" },
-    ".cm-content": { fontFamily: "'Fira Code', Consolas, monospace" },
+    ".cm-content": {
+        fontFamily: "'Fira Code', Consolas, monospace",
+        paddingBottom: "50vh"
+    },
 
     // Scrollbar Webkit Styles
     "& ::-webkit-scrollbar": {

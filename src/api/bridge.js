@@ -69,6 +69,8 @@ export function initBridge(view) {
     window.undo = () => api.undo();
     window.redo = () => api.redo();
     window.insertText = (text) => api.insertText(text);
+    window.insertBracket = (left, right) => api.insertBracket(left, right);
+    window.insertTab = () => api.insertTab();
     window.moveCursor = (direction) => api.moveCursor(direction);
 
     // 6. Features (Phase 3)

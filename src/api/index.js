@@ -1,5 +1,5 @@
 import { EditorView } from "codemirror"
-import { EditorSelection } from "@codemirror/state"
+import { EditorSelection, Transaction } from "@codemirror/state"
 import { Logger } from "../logger"
 import {
     themeConfig, highlightStyleConfig, fontSizeConfig,
@@ -15,6 +15,29 @@ import { showMinimap } from "@replit/codemirror-minimap"
 import { EditorView as View } from "@codemirror/view"
 import { lineNumbers } from "@codemirror/view"
 import { setSearchQuery, SearchQuery } from "@codemirror/search"
+import { autocompletion } from "@codemirror/autocomplete"
+import { lintGutter, linter } from "@codemirror/lint"
+import { syntaxTree } from "@codemirror/language"
+
+/**
+ * Generic syntax error checker (Lezer Parser Linter)
+ */
+const syntaxLinter = linter((view) => {
+    let diagnostics = [];
+    // Traverse the syntax tree looking for nodes marked as "Error"
+    syntaxTree(view.state).cursor().iterate((node) => {
+        if (node.type.isError) {
+            diagnostics.push({
+                from: node.from,
+                to: node.to,
+                severity: "error", // Mark as error
+                message: "Syntax Error", // Tooltip message
+                actions: []
+            });
+        }
+    });
+    return diagnostics;
+});
 
 /**
  * Modern Editor API
@@ -53,7 +76,11 @@ export class EditorApi {
         Logger.debug(`[API] setValue: Length=${text.length}`);
 
         this.view.dispatch({
-            changes: { from: 0, to: this.view.state.doc.length, insert: text }
+            changes: { from: 0, to: this.view.state.doc.length, insert: text },
+            annotations: [
+                Transaction.addToHistory.of(false),
+                Transaction.userEvent.of("programmatic")
+            ]
         });
     }
 
@@ -180,8 +207,18 @@ export class EditorApi {
         if (!this.view) return;
         Logger.info(`[API] setEditorConfig: Lint=${enableLint}, Auto=${enableAutocomplete}`);
 
-        // Phase 1: Just log, as we haven't implemented lint/autocomplete compartments yet
-        // In the future, reconfigure featureConfig or specific compartments
+        let extensions = [];
+        if (enableAutocomplete) {
+            extensions.push(autocompletion());
+        }
+        if (enableLint) {
+            extensions.push(lintGutter());
+            extensions.push(syntaxLinter); // Inject the missing syntax checker
+        }
+
+        this.view.dispatch({
+            effects: featureConfig.reconfigure(extensions)
+        });
     }
 
     /**
@@ -253,7 +290,7 @@ export class EditorApi {
 
     /**
      * Get Editor Statistics
-     * @returns {string} JSON string { lines, length, chars, words, selection: { from, to } }
+     * @returns {string} JSON string { lines, length, chars, charsNoSpace, words, selection: { from, to } }
      */
     getStats() {
         if (!this.view) return "{}";
@@ -265,8 +302,9 @@ export class EditorApi {
             lines: doc.lines,
             length: text.length,
             // Simple word count approximation
-            words: text.match(/\S+/g)?.length || 0,
-            chars: text.replace(/\s/g, "").length,
+            words: text.trim() === '' ? 0 : text.trim().split(/\s+/).length,
+            chars: text.length,
+            charsNoSpace: text.replace(/\s/g, "").length,
             selection: {
                 from: state.selection.main.from,
                 to: state.selection.main.to
@@ -420,6 +458,46 @@ export class EditorApi {
             selection: { anchor: selection.from + text.length },
             scrollIntoView: true
         });
+    }
+
+    /**
+     * Handle inserting a bracket matching pair (e.g. () or [])
+     * @param {string} left 
+     * @param {string} right 
+     */
+    insertBracket(left, right) {
+        if (!this.view) return;
+        const state = this.view.state;
+        const selection = state.selection.main;
+
+        if (!selection.empty) {
+            // Has selection: Wrap the selected text
+            const selectedText = state.sliceDoc(selection.from, selection.to);
+            const newText = left + selectedText + right;
+            this.view.dispatch(state.update({
+                changes: { from: selection.from, to: selection.to, insert: newText },
+                // Keep the inner text selected
+                selection: { anchor: selection.from + left.length, head: selection.to + left.length },
+                scrollIntoView: true
+            }));
+        } else {
+            // No selection: Insert pair and put cursor in the middle
+            const newText = left + right;
+            const pos = selection.from;
+            this.view.dispatch(state.update({
+                changes: { from: pos, insert: newText },
+                selection: { anchor: pos + left.length },
+                scrollIntoView: true
+            }));
+        }
+    }
+
+    /**
+     * Handle Tab key insertion (smart indent / spaces)
+     */
+    insertTab() {
+        if (!this.view) return;
+        import("@codemirror/commands").then(({ insertTab }) => insertTab(this.view) || true);
     }
 
     /**
