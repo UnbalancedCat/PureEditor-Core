@@ -14,11 +14,11 @@ import {
 // Languages & Themes (Basic imports for initial state)
 import { defaultLanguage } from "./languages"
 import { customLightTheme, customLightHighlightStyle, baseTheme } from "./themes"
-import { syntaxHighlighting } from "@codemirror/language"
-import { history, undoDepth, redoDepth } from "@codemirror/commands"
+import { syntaxHighlighting, foldGutter } from "@codemirror/language"
+import { history, undoDepth, redoDepth, indentWithTab } from "@codemirror/commands"
 import { search } from "@codemirror/search"
 import { logSearchStats } from "./features/search"
-import { lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from "@codemirror/view"
+import { lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, keymap } from "@codemirror/view"
 
 // 0. Initialize Host Interface
 const host = new EditorHost();
@@ -39,6 +39,7 @@ const myExtensions = [
 
     // Dynamic Configurations
     lineNumbersConfig.of(lineNumbers()),
+    foldGutter(), // [Fix] Add folding arrows logic into the gutter
     readOnlyConfig.of(EditorView.editable.of(true)),
     wordWrapConfig.of([]),
     fontSizeConfig.of([]),
@@ -48,6 +49,7 @@ const myExtensions = [
     minimapConfig.of([]),
     featureConfig.of([]),
     keymapConfig.of(getHostKeymap(host)), // [New] Inject Host Keymap
+    keymap.of([indentWithTab]), // [Fix] Force Tab to indent instead of changing focus
 
     // Theme & Language
     baseTheme,

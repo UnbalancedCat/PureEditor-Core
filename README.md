@@ -82,6 +82,24 @@
 | `window.editorHost.onSearchResultChange(current: number, total: number)` | 搜索结果数量或当前高亮项改变时触发。 |
 | `window.editorHost.dispatchCommand(commandId: string)` | 请求宿主执行特定的通用命令 (如: 'file.new', 'view.openSettings' 等)。 |
 
+## 支持的语言 (Supported Languages)
+
+PureEditor-Core-Meta 支持多种语言的语法高亮，部分语言原生支持高级的语法解析与语法检查 (Lint) 提示。
+
+### 原生支持 (高亮)
+主流开发语言均采用了 CodeMirror 6 最新的 Lezer 解析引擎，拥有完美的语法树支持，未来可无缝接入 Lint：
+- **Web 基本功**: HTML, CSS, JavaScript / TypeScript, JSON
+- **前端进阶**: Vue, SASS, LESS
+- **主流后端**: Python, Java, C / C++, PHP, Go, Rust
+- **其他**: Markdown, SQL, XML, YAML, WebAssembly (wat/wast)
+
+### 经典支持 (仅高亮)
+基于经典正则引擎 (`legacy-modes`) 移植，为以下特定领域语言提供基础的颜色高亮支持（无代码级语法检查）：
+- **移动端应用开发**: Dart (Flutter), Swift (iOS), Kotlin (Android)
+- **脚本与自动化**: Shell / Bash / Zsh, PowerShell, Lua, Ruby
+- **硬件描述语言**: Verilog, SystemVerilog
+- **容器与部署**: Dockerfile
+
 ## 开发与构建 (Development & Build)
 
 该项目使用 Vite 打包工具构建，并集成了许可证抓取插件以满足开源合规要求。
