@@ -113,10 +113,16 @@
             <button onclick="window.moveCursor('right')">→</button>
         </div>
 
-        <h3>Layout</h3>
+        <h3>Padding & Layout Test</h3>
         <div class="group">
-            <button onclick="window.setBodyPadding(50)">Set Padding 50px</button>
-            <button onclick="window.setBodyPadding(0)">Reset Padding</button>
+            <button onclick="log('Setting padding to 0px'); window.editorApi?.setPadding(0)">Reset Padding (0)</button>
+            <button onclick="log('Setting padding to 66px (Toolbar only)'); window.editorApi?.setPadding(66)">Toolbar
+                Only/Safe (66px)</button>
+            <button
+                onclick="log('Setting padding to 362px (Keyboard + Toolbar)'); window.editorApi?.setPadding(362)">Keyboard
+                + Toolbar (362px)</button>
+            <button onclick="log('Generating long line to force scrollbar'); generateLongLine()">Add Long Line (Test
+                Scrollbar)</button>
         </div>
 
         <h3>Command Dispatch</h3>
@@ -178,6 +184,15 @@
             // We can map these to the same log functions if we want to test legacy path
             // But implementing editorHost is sufficient for new tests
         };
+
+        function generateLongLine() {
+            if (window.editorApi) {
+                const longStr = 'This_is_a_very_long_line_to_force_the_horizontal_scrollbar_to_appear_for_testing_padding_overlap_issues_'.repeat(10);
+                window.editorApi.insertText('\n' + longStr + '\n');
+            } else {
+                alert('editorApi not ready yet');
+            }
+        }
 
     </script>
     <script type="module" src="/src/main.js"></script>

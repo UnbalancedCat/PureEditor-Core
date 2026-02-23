@@ -1,6 +1,6 @@
 # PureEditor-Core-Meta
 
-`PureEditor-Core-Meta` 是 [PureEditor](https://pureeditor.unbalancedcat.cn/welcome.html) 的下一代编辑器核心，基于 **CodeMirror 6** 构建。它专为嵌入 ArkTS/HarmonyOS WebView 而设计，通过桥接 API 与宿主应用进行无缝通信。
+`PureEditor-Core-Meta` 是 [PureEditor（鸿蒙版）](https://pureeditor.unbalancedcat.cn/welcome.html) 的下一代编辑器核心，基于 **CodeMirror 6** 构建。它专为嵌入 ArkTS/HarmonyOS WebView 而设计，通过桥接 API 与宿主应用进行无缝通信。
 
 ## 功能特性
 
@@ -43,7 +43,7 @@
 | 方法 | 描述 |
 | :--- | :--- |
 | `window.refreshLayout()` | 重新计算并刷新编辑器布局。 |
-| `window.setBodyPadding(bottom: number)` | 设置底部内边距，用于适配虚拟键盘和自定义工具栏。 |
+| `window.editorApi.setPadding(bottom: number)` | 设置 Web 容器底部的 `padding-bottom` (配合 `box-sizing: border-box` 高度内挤压)，用于物理避让虚拟键盘和底栏。 |
 | `window.undo()` | 撤销上一步操作。 |
 | `window.redo()` | 重做上一步操作。 |
 | `window.insertText(text: string)` | 在当前光标处插入文本。 |

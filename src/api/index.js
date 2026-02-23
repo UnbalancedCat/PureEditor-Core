@@ -525,8 +525,19 @@ export class EditorApi {
      * @param {number} bottom 
      */
     setPadding(bottom) {
-        // We set it on the body to allow the editor to scroll "past" the content
+        if (!this.view || bottom === undefined) return;
+
+        // 我们将外部系统算好的物理避让高度，作为整个 HTML body 的底垫。
+        // 这会让网页在内部被往上推起，彻底跨越底部安全区/键盘区。
+        // [Fix] 必须设置 box-sizing: border-box 才能让 100vh 的 body 因为 padding 而向内挤压高度，
+        // 从而带动内部定高 100% 的 CodeMirror 容器跟着缩水，把横向滚动条抬高。
+        document.body.style.boxSizing = 'border-box';
         document.body.style.paddingBottom = `${bottom}px`;
+
+        // 顺势滚动一下，确保光标进入中心视野
+        this.view.dispatch({
+            effects: EditorView.scrollIntoView(this.view.state.selection.main.head, { y: "center" })
+        });
     }
 
     /**
