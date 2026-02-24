@@ -15,7 +15,7 @@ import {
 import { defaultLanguage } from "./languages"
 import { customLightTheme, customLightHighlightStyle, baseTheme } from "./themes"
 import { syntaxHighlighting, foldGutter } from "@codemirror/language"
-import { history, undoDepth, redoDepth, indentWithTab } from "@codemirror/commands"
+import { history, undoDepth, redoDepth, indentWithTab, historyKeymap } from "@codemirror/commands"
 import { search } from "@codemirror/search"
 import { logSearchStats } from "./features/search"
 import { lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, keymap } from "@codemirror/view"
@@ -48,6 +48,7 @@ const myExtensions = [
     // Features (Placeholders for now)
     minimapConfig.of([]),
     featureConfig.of([]),
+    keymap.of(historyKeymap),
     keymapConfig.of(getHostKeymap(host)), // [New] Inject Host Keymap
     keymap.of([indentWithTab]), // [Fix] Force Tab to indent instead of changing focus
 

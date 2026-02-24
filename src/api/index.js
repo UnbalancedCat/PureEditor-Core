@@ -18,6 +18,7 @@ import { setSearchQuery, SearchQuery } from "@codemirror/search"
 import { autocompletion } from "@codemirror/autocomplete"
 import { lintGutter, linter } from "@codemirror/lint"
 import { syntaxTree } from "@codemirror/language"
+import { getCachedHostKeymap } from "../keymaps"
 
 /**
  * Generic syntax error checker (Lezer Parser Linter)
@@ -235,8 +236,19 @@ export class EditorApi {
      * @param {boolean} enable
      */
     setShortcutsEnabled(enable) {
-        // Stub for now, preventing crash
-        // Logger.info(`[API] setShortcutsEnabled: ${enable} (Not Implemented)`);
+        if (!this.view) {
+            Logger.warn("[API] setShortcutsEnabled: Editor not ready");
+            return;
+        }
+
+        Logger.info(`[API] setShortcutsEnabled: ${enable}`);
+
+        // 如果 enable 为 true，获取之前缓存的扩展；如果为 false，传入空数组卸载扩展
+        const extension = enable ? getCachedHostKeymap() : [];
+
+        this.view.dispatch({
+            effects: keymapConfig.reconfigure(extension)
+        });
     }
 
     /**
