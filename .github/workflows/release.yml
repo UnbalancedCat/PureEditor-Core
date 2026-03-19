@@ -1,0 +1,64 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. 检出仓库代码 ──
+      - name: Checkout PureEditor-Core
+        uses: actions/checkout@v4
+
+      # ── 2. 从 package.json 提取版本号 ──
+      - name: Extract version from package.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "value=v${VERSION}-core" >> "$GITHUB_OUTPUT"
+          echo "Extracted version: v${VERSION}-core"
+
+      # ── 3. 安装 Node.js ──
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # ── 4. 安装依赖并构建 ──
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # ── 5. 准备发布产物 ──
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          cp dist/editor.bundle.js release/
+          [ -f dist/THIRD_PARTY_NOTICES.txt ] && cp dist/THIRD_PARTY_NOTICES.txt release/
+
+      # ── 6. 创建 GitHub Release ──
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.value }}
+          name: PureEditor Core ${{ steps.version.outputs.value }}
+          body: |
+            ## PureEditor-Core ${{ steps.version.outputs.value }}
+
+            自动构建发布，与 HPTE 主仓库版本同步。
+
+            ### 产物
+            - `editor.bundle.js` — 编辑器核心 Bundle
+            - `THIRD_PARTY_NOTICES.txt` — 第三方依赖许可清单
+          files: release/*
+          generate_release_notes: true

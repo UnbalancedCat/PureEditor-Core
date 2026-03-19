@@ -1,6 +1,6 @@
 {
     "name": "pure-editor-meta",
-    "version": "0.0.1",
+    "version": "0.6.21",
     "type": "module",
     "scripts": {
         "dev": "vite",

@@ -1,6 +1,6 @@
 # PureEditor-Core-Meta
 
-`PureEditor-Core-Meta` 是 [PureEditor（鸿蒙版）](https://pureeditor.unbalancedcat.cn/welcome.html) 的下一代编辑器核心，基于 **CodeMirror 6** 构建。它专为嵌入 ArkTS/HarmonyOS WebView 而设计，通过桥接 API 与宿主应用进行无缝通信。
+`PureEditor-Core-Meta` 是 [PureEditor（HarmonyOS）](https://pureeditor.unbalancedcat.cn/welcome.html) 的下一代编辑器核心，基于 **CodeMirror 6** 构建。它专为嵌入 ArkTS/HarmonyOS WebView 而设计，通过桥接 API 与宿主应用进行无缝通信。
 
 ## 功能特性
 
