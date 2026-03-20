@@ -1,6 +1,6 @@
-# PureEditor-Core-Meta
+# PureEditor-Core
 
-`PureEditor-Core-Meta` 是 [PureEditor（HarmonyOS）](https://pureeditor.unbalancedcat.cn/welcome.html) 的下一代编辑器核心，基于 **CodeMirror 6** 构建。它专为嵌入 ArkTS/HarmonyOS WebView 而设计，通过桥接 API 与宿主应用进行无缝通信。
+`PureEditor-Core` 是 [PureEditor（HarmonyOS）](https://pureeditor.unbalancedcat.cn/welcome.html) 的重构版本的编辑器核心，基于 **CodeMirror 6** 构建。它专为嵌入 ArkTS/HarmonyOS WebView 而设计，通过桥接 API 与宿主应用进行无缝通信。
 
 ## 功能特性
 
@@ -84,7 +84,7 @@
 
 ## 支持的语言 (Supported Languages)
 
-PureEditor-Core-Meta 支持多种语言的语法高亮，部分语言原生支持高级的语法解析与语法检查 (Lint) 提示。
+PureEditor-Core 支持多种语言的语法高亮，部分语言原生支持高级的语法解析与语法检查 (Lint) 提示。
 
 ### 原生支持 (高亮)
 主流开发语言均采用了 CodeMirror 6 最新的 Lezer 解析引擎，拥有完美的语法树支持，未来可无缝接入 Lint：
