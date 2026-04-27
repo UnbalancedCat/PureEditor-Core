@@ -5,7 +5,7 @@ import {
     themeConfig, highlightStyleConfig, fontSizeConfig,
     readOnlyConfig, wordWrapConfig, lineNumbersConfig,
     languageConfig, featureConfig, minimapConfig,
-    keymapConfig
+    keymapConfig, historyConfig
 } from "../configuration"
 import { getLanguageExtension } from "../languages"
 import { getThemeExtension } from "../themes"
@@ -19,6 +19,7 @@ import { autocompletion } from "@codemirror/autocomplete"
 import { lintGutter, linter } from "@codemirror/lint"
 import { syntaxTree } from "@codemirror/language"
 import { getCachedHostKeymap } from "../keymaps"
+import { history } from "@codemirror/commands"
 
 /**
  * Generic syntax error checker (Lezer Parser Linter)
@@ -560,6 +561,18 @@ export class EditorApi {
         this.view.dispatch({
             selection: { anchor: 0, head: 0 },
             scrollIntoView: true
+        });
+    }
+
+    /**
+     * Reset Undo/Redo History
+     * Used when switching tabs to prevent cross-tab undo contamination.
+     */
+    resetHistory() {
+        if (!this.view) return;
+        Logger.info("[API] resetHistory");
+        this.view.dispatch({
+            effects: historyConfig.reconfigure(history())
         });
     }
 }

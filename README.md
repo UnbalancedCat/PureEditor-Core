@@ -69,6 +69,7 @@
 | `window.editorApi.getStats(): jsonString` | 返回 JSON 字符串 `{ lines, length, charsNoSpace, words }`。 |
 | `window.editorApi.saveViewState(): jsonString` | 返回序列化的状态 JSON (包含滚动位置 + 选区)。 |
 | `window.editorApi.restoreViewState(jsonString)` | 从保存的 JSON 字符串恢复编辑器状态。 |
+| `window.editorApi.resetHistory()` | 重置撤销/重做堆栈历史，用于多标签页切换时隔离不同文件的修改记录。 |
 
 ### 宿主回调 (Host Callbacks)
 
