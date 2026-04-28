@@ -1,15 +1,14 @@
 import { EditorView } from "codemirror"
 import { EditorSelection, Transaction } from "@codemirror/state"
 import { Logger } from "../logger"
-import {
-    themeConfig, highlightStyleConfig, fontSizeConfig,
+import { themeConfig, highlightStyleConfig, fontSizeConfig,
     readOnlyConfig, wordWrapConfig, lineNumbersConfig,
     languageConfig, featureConfig, minimapConfig,
     keymapConfig, historyConfig
 } from "../configuration"
 import { getLanguageExtension } from "../languages"
 import { getThemeExtension } from "../themes"
-import { updateSearchState } from "../features/search"
+import { updateSearchState, logSearchStats } from "../features/search"
 import { checkCursorVisibility } from "../features/mobile"
 import { showMinimap } from "@replit/codemirror-minimap"
 import { EditorView as View } from "@codemirror/view"
@@ -49,6 +48,8 @@ export class EditorApi {
     constructor(view) {
         this.view = view;
         this.Logger = Logger;
+        this.tabStates = new Map();
+        this.currentTabId = null;
         Logger.info("[API] EditorApi Instantiated");
     }
 
@@ -65,10 +66,6 @@ export class EditorApi {
 
     // --- Core IO ---
 
-    /**
-     * Set editor content securely.
-     * @param {string} text 
-     */
     setValue(text) {
         if (!this.view) {
             Logger.warn("[API] setValue: Editor not ready");
@@ -84,6 +81,106 @@ export class EditorApi {
                 Transaction.userEvent.of("programmatic")
             ]
         });
+    }
+
+    /**
+     * Switch to a different Tab, saving the current state in memory
+     * @param {number|string} tabId 
+     * @param {string} fallbackContent Used if the tab doesn't exist in memory yet
+     */
+    switchTab(tabId, fallbackContent) {
+        if (!this.view) return;
+
+        // 1. Save current state
+        if (this.currentTabId !== null && this.currentTabId !== tabId) {
+            this.tabStates.set(this.currentTabId, {
+                state: this.view.state,
+                scroll: {
+                    scrollTop: this.view.scrollDOM.scrollTop,
+                    scrollLeft: this.view.scrollDOM.scrollLeft
+                }
+            });
+        }
+
+        // Capture global settings from current state before switching
+        const currentTheme = themeConfig.get(this.view.state);
+        const currentHighlight = highlightStyleConfig.get(this.view.state);
+        const currentFontSize = fontSizeConfig.get(this.view.state);
+        const currentWordWrap = wordWrapConfig.get(this.view.state);
+        const currentLineNumbers = lineNumbersConfig.get(this.view.state);
+        const currentKeymap = keymapConfig.get(this.view.state);
+        const currentFeature = featureConfig.get(this.view.state);
+        const currentMinimap = minimapConfig.get(this.view.state);
+        const currentReadOnly = readOnlyConfig.get(this.view.state);
+
+        this.currentTabId = tabId;
+
+        // 2. Switch
+        if (this.tabStates.has(tabId)) {
+            const saved = this.tabStates.get(tabId);
+            this.view.setState(saved.state);
+
+            // Re-apply global settings so they don't tear
+            this.view.dispatch({
+                effects: [
+                    themeConfig.reconfigure(currentTheme),
+                    highlightStyleConfig.reconfigure(currentHighlight),
+                    fontSizeConfig.reconfigure(currentFontSize),
+                    wordWrapConfig.reconfigure(currentWordWrap),
+                    lineNumbersConfig.reconfigure(currentLineNumbers),
+                    keymapConfig.reconfigure(currentKeymap),
+                    featureConfig.reconfigure(currentFeature),
+                    minimapConfig.reconfigure(currentMinimap),
+                    readOnlyConfig.reconfigure(currentReadOnly)
+                ]
+            });
+
+            this.view.scrollDOM.scrollTop = saved.scroll.scrollTop;
+            this.view.scrollDOM.scrollLeft = saved.scroll.scrollLeft;
+            logSearchStats(this.view);
+            Logger.debug(`[API] switchTab: Restored state for tab ${tabId}`);
+        } else {
+            // First time loading this tab. 
+            // 1. Temporarily drop the history extension to wipe any inherited history from the previous tab
+            this.view.dispatch({
+                effects: historyConfig.reconfigure([]) 
+            });
+
+            // 2. Replace content without adding to history
+            this.view.dispatch({
+                changes: { from: 0, to: this.view.state.doc.length, insert: fallbackContent },
+                selection: { anchor: 0 },
+                scrollIntoView: true,
+                annotations: [
+                    Transaction.addToHistory.of(false),
+                    Transaction.userEvent.of("programmatic")
+                ]
+            });
+
+            // 3. Re-add history extension to start fresh for this new tab
+            this.view.dispatch({
+                effects: historyConfig.reconfigure(history()) 
+            });
+
+            this.view.scrollDOM.scrollTop = 0;
+            this.view.scrollDOM.scrollLeft = 0;
+            logSearchStats(this.view);
+            Logger.debug(`[API] switchTab: Initialized new state for tab ${tabId}`);
+        }
+    }
+
+    /**
+     * Delete a tab from memory to free resources
+     * @param {number|string} tabId 
+     */
+    closeTab(tabId) {
+        if (this.tabStates.has(tabId)) {
+            this.tabStates.delete(tabId);
+            Logger.debug(`[API] closeTab: Removed state for tab ${tabId}`);
+        }
+        if (this.currentTabId === tabId) {
+            this.currentTabId = null;
+        }
     }
 
     /**

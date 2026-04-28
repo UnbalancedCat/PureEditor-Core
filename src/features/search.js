@@ -68,7 +68,12 @@ export function updateSearchState(view, keyword, replaceWord, isCaseSensitive, i
 
 export function logSearchStats(view) {
     const query = getSearchQuery(view.state);
-    if (!query || !query.search) return;
+    if (!query || !query.search) {
+        if (window.editorHost && window.editorHost.onSearchResultChange) {
+            try { window.editorHost.onSearchResultChange(0, 0); } catch(e) {}
+        }
+        return;
+    }
 
     let total = 0, current = 0;
     try {

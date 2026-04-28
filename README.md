@@ -21,8 +21,10 @@
 
 | 方法 | 描述 |
 | :--- | :--- |
-| `window.editorApi.setValue(text: string)` | 安全地设置编辑器内容。 |
+| `window.editorApi.setValue(text: string)` | 安全地设置编辑器内容（多标签场景下推荐使用 `switchTab`）。 |
 | `window.editorApi.getValue(): string` | 获取当前编辑器内容。 |
+| `window.editorApi.switchTab(tabId: string\|number, fallbackContent: string)` | 切换标签页状态。会自动在 JS 内存中缓存当前的 `EditorState`（包含完整的撤销历史堆栈、滚动条和光标位置）。 |
+| `window.editorApi.closeTab(tabId: string\|number)` | 释放 JS 内存中属于该标签页的缓存状态。 |
 | `window.editorApi.isReady(): boolean` | 检查编辑器视图是否已初始化。 |
 
 ### 配置 (Configuration)

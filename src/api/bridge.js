@@ -22,6 +22,14 @@ export function initBridge(view) {
         Logger.debug("[Bridge] setContent called");
         api.setValue(text);
     };
+    window.switchTab = (tabId, fallbackContent) => {
+        Logger.debug(`[Bridge] switchTab called: ${tabId}`);
+        api.switchTab(tabId, fallbackContent);
+    };
+    window.closeTab = (tabId) => {
+        Logger.debug(`[Bridge] closeTab called: ${tabId}`);
+        api.closeTab(tabId);
+    };
     window.getContent = () => {
         Logger.debug("[Bridge] getContent called");
         return api.getValue();
